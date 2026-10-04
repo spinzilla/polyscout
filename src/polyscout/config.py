@@ -22,6 +22,8 @@ class Settings:
     llm_base_url: str = ""
     llm_api_key: str = field(default="", repr=False)
     llm_model: str = ""
+    llm_temperature: float | None = None  # None = 不发送该字段（部分端点拒绝自定义温度）
+    llm_timeout: float = 180.0  # 推理模型常需 60s+；适配器超时保持 20s 不变
     search_provider: str = "tavily"
     search_endpoint: str = "https://api.tavily.com/search"
     search_api_key: str = field(default="", repr=False)
@@ -47,7 +49,7 @@ class Settings:
 
     @classmethod
     def from_env(cls):
-        return cls(**{
+        kwargs = {
             name: os.getenv(env, default) for name, env, default in (
                 ("llm_base_url", "POLYSCOUT_LLM_BASE_URL", ""),
                 ("llm_api_key", "POLYSCOUT_LLM_API_KEY", ""),
@@ -57,4 +59,11 @@ class Settings:
                 ("search_api_key", "POLYSCOUT_SEARCH_API_KEY", ""),
                 ("github_token", "POLYSCOUT_GITHUB_TOKEN", ""),
             )
-        })
+        }
+        # 温度缺省为 None = 请求中不携带该字段；部分端点（如 kimi-k3）拒绝自定义温度
+        temp = os.getenv("POLYSCOUT_LLM_TEMPERATURE", "").strip()
+        kwargs["llm_temperature"] = float(temp) if temp else None
+        timeout = os.getenv("POLYSCOUT_LLM_TIMEOUT", "").strip()
+        if timeout:
+            kwargs["llm_timeout"] = float(timeout)
+        return cls(**kwargs)

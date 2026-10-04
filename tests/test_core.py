@@ -54,10 +54,27 @@ def test_store_roundtrip_unique_runs_and_integrity(tmp_path):
 
 def test_citation_validation_rejects_missing_and_unavailable(tmp_path):
     store = EvidenceStore(tmp_path)
-    store.add(Observation(adapter="github", query="q", status="unavailable", reason="failed"))
+    store.add(Observation(adapter="websearch", query="q", status="unavailable", reason="failed"))
     for identifier in ("E0001", "E9999"):
         with pytest.raises(ValueError):
             validate_citations(Synthesis(claims=[Claim(text="claim", evidence_ids=[identifier], confidence="high", rationale="claimed")], gaps=[]), store.records)
+
+
+def test_citation_validation_salvages_partially_valid_claims(tmp_path):
+    # 打捞语义：混合引用剔除无效部分保留 claim；纯无效引用才丢弃并记入 gaps
+    store = EvidenceStore(tmp_path)
+    store.add(Observation(adapter="github", query="q", status="retrieved", url="https://api.github.com/repos/a/b",
+                          excerpt='"archived": false', excerpt_kind="api_fields", credibility="primary"))
+    store.add(Observation(adapter="websearch", query="q", status="unavailable", reason="wall"))
+    result = Synthesis(claims=[
+        Claim(text="mixed", evidence_ids=["E0001", "E0002"], confidence="high", rationale="r"),
+        Claim(text="pure-invalid", evidence_ids=["E0002"], confidence="low", rationale="r"),
+    ], gaps=[])
+    out = validate_citations(result, store.records)
+    assert [c.text for c in out.claims] == ["mixed"]
+    assert out.claims[0].evidence_ids == ["E0001"]
+    assert out.claims[0].confidence == "medium"
+    assert any("dropped" in g for g in out.gaps)
 
 
 def test_research_end_to_end_parallel_sources_and_confidence_caps(tmp_path):
@@ -266,3 +283,65 @@ def test_offline_guard_blocks_loopback_outside_event_loop_socketpair():
     with socket.socket() as sock:
         with pytest.raises(AssertionError, match="forbidden"):
             sock.connect(("127.0.0.1", 80))
+
+
+def test_llm_temperature_omitted_unless_configured():
+    # 回归：kimi-k3 等端点拒绝自定义 temperature，缺省必须不携带该字段
+    from polyscout.llm import LLM
+    from polyscout.models import Plan
+    from polyscout.transport import Transport
+
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return chat(plan())
+
+    async def run(temp):
+        s = settings() if temp is None else settings(llm_temperature=temp)
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            await LLM(s, Transport(client)).ask("plan", {"question": "q"}, Plan)
+
+    asyncio.run(run(None))
+    asyncio.run(run(0.2))
+    assert "temperature" not in bodies[0]
+    assert bodies[1]["temperature"] == 0.2
+
+
+def test_llm_strips_markdown_code_fence():
+    # 回归：模型把 JSON 套进 ```json 围栏时仍能解析
+    from polyscout.llm import LLM, strip_code_fence
+    from polyscout.models import Plan
+    from polyscout.transport import Transport
+
+    assert strip_code_fence('```json\n{"a": 1}\n```') == '{"a": 1}'
+    assert strip_code_fence('{"a": 1}') == '{"a": 1}'
+
+    fenced = json.dumps(plan())
+    def handler(request):
+        return httpx.Response(200, json={"choices": [{"message": {"content": f"```json\n{fenced}\n```"}}], "usage": {"total_tokens": 1}})
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            result = await LLM(settings(), Transport(client)).ask("plan", {"question": "q"}, Plan)
+            assert result.subquestions
+    asyncio.run(run())
+
+
+def test_llm_uses_longer_configurable_timeout():
+    # 回归：推理模型响应常超 20s，LLM 调用必须用可配置的长超时
+    from polyscout.llm import LLM
+    from polyscout.models import Plan
+    from polyscout.transport import Transport
+
+    seen = []
+    def handler(request):
+        seen.append(request.extensions.get("timeout"))
+        return chat(plan())
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            await LLM(settings(llm_timeout=321), Transport(client)).ask("plan", {"question": "q"}, Plan)
+    asyncio.run(run())
+    assert seen and seen[0].get("connect") is not None
+    assert all(v == 321 for v in seen[0].values())

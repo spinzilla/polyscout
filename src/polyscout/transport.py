@@ -16,9 +16,10 @@ class Transport:
         self.client = client
         self.counts: Counter = Counter()
 
-    async def request(self, service: str, method: str, url: str, **kwargs) -> httpx.Response:
+    async def request(self, service: str, method: str, url: str, timeout: float = 20, **kwargs) -> httpx.Response:
+        # 适配器保持 20s 紧凑超时（防挂死）；LLM 推理调用由调用方传入更长超时
         self.counts[service] += 1
-        request = self.client.build_request(method, url, timeout=20, **kwargs)
+        request = self.client.build_request(method, url, timeout=timeout, **kwargs)
         request.headers.pop("cookie", None)
         # A provider may set cookies; no subsequent request may transmit them.
         try:

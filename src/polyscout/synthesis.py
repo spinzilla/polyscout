@@ -22,33 +22,49 @@ def fallback(records: list[Evidence], reason: str) -> Synthesis:
 
 def validate_citations(result: Synthesis, records: list[Evidence]) -> Synthesis:
     lookup = {e.id: e for e in records if e.status == "retrieved"}
-    if not result.claims and lookup:
-        raise ValueError("No supported claims returned")
+    kept: list[Claim] = []
+    dropped = 0
     for claim in result.claims:
-        if any(key not in lookup for key in claim.evidence_ids):
-            raise ValueError("Citation refers to missing or unavailable evidence")
-        claim.evidence_ids = list(dict.fromkeys(claim.evidence_ids))
+        # 打捞策略：剔除无效引用而非整篇否决；全部引用无效的 claim 才丢弃
+        valid = [key for key in dict.fromkeys(claim.evidence_ids) if key in lookup]
+        if not valid:
+            dropped += 1
+            continue
+        claim.evidence_ids = valid
         # Credibility describes provenance, not proof that an inferred claim is true.
-        if any(lookup[key].credibility != "primary" for key in claim.evidence_ids):
+        if any(lookup[key].credibility != "primary" for key in valid):
             claim.confidence = "low"
         elif claim.confidence == "high":
             claim.confidence = "medium"
         claim.rationale += " [v0.1 cap: primary API evidence <= medium; search snippets <= low.]"
+        kept.append(claim)
+    result.claims = kept
+    if dropped:
+        result.gaps.append(f"{dropped} claim(s) dropped: cited missing or unavailable evidence.")
+    if not result.claims and (lookup or dropped):
+        # 检索到证据却没有任何可支持的 claim（全被丢弃或模型没产出）→ 否决，走降级
+        raise ValueError("No supported claims returned")
     return result
 
 
 async def synthesize(question: str, records: list[Evidence], llm: LLM) -> Synthesis:
-    if not any(e.status == "retrieved" for e in records):
+    retrieved = [e for e in records if e.status == "retrieved"]
+    if not retrieved:
         return Synthesis(claims=[], gaps=["Insufficient evidence: no usable source excerpts were obtained."])
     try:
         result = await llm.ask(
-            "Synthesize an evidence-based answer to the research question. Every factual claim must cite provided retrieved evidence IDs. Never invent IDs, quotes or facts. Distinguish search snippets from directly observed API fields. Record missing coverage, contradictions and unavailable sources in gaps. A citation does not prove entailment. Use cautious language and low confidence when support is weak.",
-            {"question": question, "evidence": [e.model_dump(mode="json", exclude={"raw_path", "excerpt_sha256"}) for e in records]},
+            "Synthesize an evidence-based answer to the research question. Every factual claim must cite provided retrieved evidence IDs. Never invent IDs, quotes or facts. Distinguish search snippets from directly observed API fields. Record missing coverage, contradictions and unavailable sources in gaps. A citation does not prove entailment. Use cautious language and low confidence when support is weak. IDs listed under unavailable_not_citable explain coverage gaps; they must NEVER appear in evidence_ids.",
+            {"question": question,
+             "evidence": [e.model_dump(mode="json", exclude={"raw_path", "excerpt_sha256"}) for e in retrieved],
+             "unavailable_not_citable": [{"id": e.id, "adapter": e.adapter, "reason": e.reason}
+                                          for e in records if e.status != "retrieved"]},
             Synthesis,
         )
         return validate_citations(result, records)
-    except (FetchError, ValueError):
-        return fallback(records, "Synthesis unavailable or invalid; showing retrieved excerpts without inferred conclusions.")
+    except (FetchError, ValueError) as exc:
+        # 失败原因写进报告，否则线上故障无法事后诊断
+        detail = getattr(exc, "reason", None) or str(exc)[:200]
+        return fallback(records, f"Synthesis unavailable or invalid ({detail}); showing retrieved excerpts without inferred conclusions.")
 
 
 def safe_text(value: str) -> str:
