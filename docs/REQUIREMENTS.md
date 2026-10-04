@@ -23,5 +23,14 @@ Apache-2.0 开源。理由：专利授权条款、企业敢用、adapter 需要�
 ## Q6 LLM 接入
 纯 BYOK：用户自带任意 OpenAI 兼容端点（官方/DeepSeek/中转站/本地 vLLM）。无托管额度、无计费。
 
-## 第二轮待决（grill 继续）
-技术栈细节、Evidence Store 数据格式、B站转录实现路线（官方字幕 API vs 本地 ASR）、评测基准建设、发布节奏、维护模式。
+## 第二轮已冻结（2026-10-03，用户逐条确认）
+
+- **Q7 B站转录**：官方 CC 字幕优先 + 本地 faster-whisper 兜底；ASR 为可选依赖 `polyscout[asr]`，不进基础安装。
+- **Q8 Evidence Store**：JSONL + run 目录约定（evidence.jsonl + report.md + 原始材料），零依赖、纯文本可审计。
+- **Q9 调研引擎**：自研轻量规划循环（拆解 → 平台特异化查询词 → 多 adapter 并行 → 综合），零框架依赖；生态位经 MCP server 反向接入。
+- **Q10 评测基准**：spike 方法固化为回归评测——固定跨平台题库（≥5 题含 T1-T3）+ 匿名混排 + 双评委盲评脚本；大版本发布前手动跑，不进 CI（评委烧 token）。
+- **Q11 发布节奏**：v0.1 = GitHub adapter + 网页搜索 + CLI + Evidence Store（最小可用核）；v0.2 加 B站；v0.3 加 CSDN + MCP。
+- **Q12 技术栈**：Python 3.11+ / httpx / pydantic / typer / pytest，无重型框架。
+- **Q13 维护承诺**：README 如实写明——学生个人项目 + 社区驱动，issue 响应 best-effort，adapter 健康靠 CI 探针公开看板，不承诺 SLA。
+
+需求基线至此定型（frontier 清空）。下一步：架构设计（issue #2 Adapter 契约、issue #3 Evidence Store schema）。
