@@ -1,0 +1,9 @@
+﻿{
+    "version":  "0.1.0",
+    "verified_at_utc":  "2026-10-04T15:12:10.9682215Z",
+    "layer":  "offline mocks and actual local CLI help",
+    "actual_research_api_calls":  0,
+    "real_environment":  "unverified",
+    "session_tokens_used":  null,
+    "session_token_note":  "Agent session usage is not exposed; no estimate is claimed."
+}

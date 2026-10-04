@@ -1,0 +1,2 @@
+"full_name":"o/repo"
+"archived":true

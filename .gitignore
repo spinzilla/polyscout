@@ -10,3 +10,7 @@ build/
 *.mp4
 .DS_Store
 Thumbs.db
+.cache/
+.tmp/
+.pytest_cache/
+runs/

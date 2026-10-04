@@ -1,0 +1,102 @@
+﻿[
+    {
+        "path":  ".gitignore",
+        "sha256":  "2f45ee4938c1d096cb21a375e0e0ec62ada83e67377f0fcf531a651a8dca27ee"
+    },
+    {
+        "path":  "BLOCKED.md",
+        "sha256":  "b15ead841e33666e5ea22974430fde962dd027cd1f2c9d9a69ed93dc4c6fd540"
+    },
+    {
+        "path":  "docs/ARCHITECTURE.md",
+        "sha256":  "3021c4f91bac329538c6615ce2d963a9d0e8b836f41910dfe3b1f5c02e6c08e3"
+    },
+    {
+        "path":  "docs/validate.ps1",
+        "sha256":  "144af6958336f44f21d9dd7a7a22e1df06012b9fbf46ff2f8c1729cc214044e2"
+    },
+    {
+        "path":  "pyproject.toml",
+        "sha256":  "46ef1e8e0b7f5ce6068cedcb1f5f21d0215590ad2998836708ad8823182f8965"
+    },
+    {
+        "path":  "README.md",
+        "sha256":  "b3828d7e963aceec3263dad9450144bf9098df7dbc2757ebe98d0a899e188ab3"
+    },
+    {
+        "path":  "src/polyscout/__init__.py",
+        "sha256":  "d9c307175f531dc9026da4ab57fea3e2aa4f2bbe3af2be7e3076385a4d22f4a5"
+    },
+    {
+        "path":  "src/polyscout/adapters/__init__.py",
+        "sha256":  "421ec2655dcac2f60083d02d423a6c501afe0ed977f5821d22621924056c7f5a"
+    },
+    {
+        "path":  "src/polyscout/adapters/base.py",
+        "sha256":  "7376adc2627892a271620a8fa92e6d51fb5c8d97fd61ce7a72715ec17201b6e2"
+    },
+    {
+        "path":  "src/polyscout/adapters/github.py",
+        "sha256":  "2675e6160af6e04bbddf7ea0124cc86ad355180be2832066c97bbc9345debcfa"
+    },
+    {
+        "path":  "src/polyscout/adapters/websearch.py",
+        "sha256":  "aa27008227e0ca8c0c4216d32e498cd99b24425cd4061fb0b8af0c34cf8b8a1d"
+    },
+    {
+        "path":  "src/polyscout/cli.py",
+        "sha256":  "c0790724163c1c398cb98cba230c4b02e9a70ded3d1d625525796e5702c11bbf"
+    },
+    {
+        "path":  "src/polyscout/config.py",
+        "sha256":  "2317db0b1eb89af75848c5a0e7e8669a27c2d66ca4338a85d9a2e38d0fd3cee0"
+    },
+    {
+        "path":  "src/polyscout/evaluation.py",
+        "sha256":  "53553f138094df56dc217937bc0c05046a862ee910f63ab4b0dbc7d780fb3f2f"
+    },
+    {
+        "path":  "src/polyscout/llm.py",
+        "sha256":  "53f97e74d68bc514e5b4e73c35948a0be0903fb93b19ca15cdfb21e2486213cd"
+    },
+    {
+        "path":  "src/polyscout/models.py",
+        "sha256":  "32c9248af90a62b397f1f79eab9c8b60dfea6189bcff0a2c8310162cddad906a"
+    },
+    {
+        "path":  "src/polyscout/planner.py",
+        "sha256":  "6ec71be285867c18f52e3637ae07ec814e867ba0f8fb8425cb041e4c33cce900"
+    },
+    {
+        "path":  "src/polyscout/store.py",
+        "sha256":  "81817139954030c64dd178191a7ca4c8e24efbf29d4e307b3bc1c23092a9db97"
+    },
+    {
+        "path":  "src/polyscout/synthesis.py",
+        "sha256":  "bc4afd01adcb5399708146a82e8c842814f01c16c00b616854c4d8972632a36c"
+    },
+    {
+        "path":  "src/polyscout/transport.py",
+        "sha256":  "f7b2748580833673e25cc2d0152fdfe21940875259976ca33bb1861231ae344e"
+    },
+    {
+        "path":  "tests/conftest.py",
+        "sha256":  "8b520e522a2654dd58c34c0fc0013af1a4d593b335710e2c44fafeb4992e7b32"
+    },
+    {
+        "path":  "tests/test_adapters.py",
+        "sha256":  "2398f26d666817faaf7beb09526e3357ee960afd81f3310f365f68e42298cb7a"
+    },
+    {
+        "path":  "tests/test_core.py",
+        "sha256":  "678069a02e54aaa96de52608406103eda2d70e6f593d3fa3b31f6e874d97f25b"
+    },
+    {
+        "path":  "tests/test_evaluation.py",
+        "sha256":  "5e65e132f6ee97995b1116b00a3464c3e5a17552c9f66c0238281bdf13261dce"
+    },
+    {
+        "path":  "uv.lock",
+        "sha256":  "25c9ebddfa5852d6f9f7e4eefe8001398cedac6d81d48b12a7f37c2fe8f1ae96"
+    }
+]

@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "status": "partial",
+  "question": "RTOS",
+  "requests": {
+    "llm": 1,
+    "github": 1,
+    "websearch": 1
+  },
+  "llm_usage": {
+    "reported_total_tokens": 0,
+    "complete": false
+  },
+  "adapters": [
+    {
+      "name": "github",
+      "capabilities": [
+        "repository_search",
+        "repository_details"
+      ],
+      "compliance": {
+        "terms_url": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+        "access_policy": "Official public REST API; optional bearer token; no private-content workflow.",
+        "robots_policy": "No HTML crawling; API access and rate-limit policy apply.",
+        "retention": "excerpts_and_links_only",
+        "cookies_supported": false,
+        "wall_action": "open_circuit_for_run"
+      }
+    },
+    {
+      "name": "websearch",
+      "capabilities": [
+        "search_snippets",
+        "tavily_protocol"
+      ],
+      "compliance": {
+        "terms_url": "https://www.tavily.com/terms",
+        "access_policy": "Operator must verify the selected provider endpoint's terms and rights to returned excerpts.",
+        "robots_policy": "No target pages fetched. Search API provider mediates indexing; this is not robots clearance for crawling.",
+        "retention": "excerpts_and_links_only",
+        "cookies_supported": false,
+        "wall_action": "open_circuit_for_run"
+      }
+    }
+  ]
+}
