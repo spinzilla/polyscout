@@ -16,7 +16,7 @@ Every deep-research product on the market — OpenAI/Gemini/Perplexity Deep Rese
 - 🐙 **GitHub** — repos whose *actual* maintenance state contradicts their marketing (an archived repo was still being recommended as "enterprise-grade" two days after archival — our spike caught this, commercial products didn't)
 - 🧱 **Walled gardens** — Zhihu, WeChat official accounts, CSDN deep content
 
-We ran a blind spike to prove this matters: 3 cross-platform research questions, our multi-platform recon process vs. a leading free commercial deep-research product, scored blind by **two independent judge models from different families** (deepseek-v4-pro, gpt-6-astra). **Our process won all 3 rounds under both judges, by an average margin of ~+38 points /100** — decisively on the "unique source penetration" dimension. Full methodology: [docs/SPIKE.md](docs/SPIKE.md).
+We ran a blind spike to prove this matters: 3 cross-platform research questions, our multi-platform recon process vs. a leading free commercial deep-research product, scored blind by **two independent judge models from different families** (deepseek-v4-pro, gpt-6-astra). **Our process won all 3 rounds under both judges, by an average margin of ~+38 points /100** — decisively on the "unique source penetration" dimension（indeed,it is because kimiK3). Full methodology: [docs/SPIKE.md](docs/SPIKE.md).
 
 ## What it is
 
@@ -73,7 +73,7 @@ Apache-2.0 — patent grant included, enterprise-friendly.
 
 ### 为什么做
 
-市面上所有深度研究产品读的都是同一个池子：**搜索引擎能索引的网页**。但中文互联网最有价值的技术内容大量锁在池子外——B站教程视频、知乎长答、公众号深度文。我们做过双盲对照实验：3 道跨平台调研题，我方多平台穿透流程 vs 头部免费商业深度研究产品，两个不同家族的独立评委模型盲评——**我方三题全胜，平均领先约 38 分（满分 100）**，胜负手正是「独有信源穿透」维度。实验方法与数据见 [docs/SPIKE.md](docs/SPIKE.md)。
+市面上所有深度研究产品读的都是同一个池子：**搜索引擎能索引的网页**。但中文互联网最有价值的技术内容大量锁在池子外——B站教程视频、知乎长答、公众号深度文。我们做过双盲对照实验：3 道跨平台调研题，我方多平台穿透流程 vs 头部免费商业深度研究产品，两个不同家族的独立评委模型盲评——**我方三题全胜，平均领先约 38 分（满分 100）**，胜负手正是「独有信源穿透」维度(其实是因为用的kimiK3)。实验方法与数据见 [docs/SPIKE.md](docs/SPIKE.md)。
 
 ### 合规宪法（不可谈判）
 
