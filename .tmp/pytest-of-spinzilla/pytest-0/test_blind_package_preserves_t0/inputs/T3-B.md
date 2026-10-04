@@ -1,1 +1,0 @@
-Exact report T3 B
