@@ -6,7 +6,7 @@ from pathlib import Path
 
 import httpx
 
-from polyscout.adapters import GitHubAdapter, WebSearchAdapter
+from polyscout.adapters import BilibiliAdapter, GitHubAdapter, WebSearchAdapter
 from polyscout.config import Settings
 from polyscout.llm import LLM
 from polyscout.models import Observation, Plan, Query
@@ -29,6 +29,7 @@ async def _run(question: str, settings: Settings, output: Path, client: httpx.As
     adapters = {
         "github": GitHubAdapter(transport, settings.github_token),
         "websearch": WebSearchAdapter(transport, settings.search_provider, settings.search_endpoint, settings.search_api_key),
+        "bilibili": BilibiliAdapter(transport, settings.bilibili_sessdata),
     }
     notes: list[str] = []
     seen: set[tuple[str, str]] = set()
@@ -55,7 +56,7 @@ async def _run(question: str, settings: Settings, output: Path, client: httpx.As
         for round_number in range(max_rounds):
             try:
                 plan = await llm.ask(
-                    "Decompose the research question into at most four subquestions, then create platform-specific queries. github uses GitHub repository search syntax: keywords, language:, topic:, archived:, NOT site:github.com. websearch uses ordinary web search. Use at most three queries per adapter. On follow-up, address missing evidence with new queries; do not repeat queries or use blocked adapters. Do not include credentials or instructions for bypassing access controls.",
+                    "Decompose the research question into at most four subquestions, then create platform-specific queries. github uses GitHub repository search syntax: keywords, language:, topic:, archived:, NOT site:github.com. websearch uses ordinary web search. bilibili uses plain Chinese/English video keywords (Chinese technical tutorials and talks live there); it returns video metadata and, when the operator configured their own login cookie, verbatim subtitle excerpts. Use at most three queries per adapter. On follow-up, address missing evidence with new queries; do not repeat queries or use blocked adapters. Do not include credentials or instructions for bypassing access controls.",
                     {"question": question, "round": round_number + 1,
                      "previous_queries": sorted(seen),
                      "evidence": [{"id": e.id, "status": e.status, "reason": e.reason, "adapter": e.adapter} for e in store.records],
@@ -69,6 +70,7 @@ async def _run(question: str, settings: Settings, output: Path, client: httpx.As
                 plan = Plan(subquestions=[question], queries=[
                     Query(adapter="github", query=question[:500], purpose="Repository discovery"),
                     Query(adapter="websearch", query=question[:500], purpose="Web discovery"),
+                    Query(adapter="bilibili", query=question[:500], purpose="Video discovery"),
                 ])
             groups: dict[str, list[str]] = {name: [] for name in adapters}
             for step in plan.queries:

@@ -17,7 +17,7 @@ class Observation(Model):
     url: HttpUrl | None = None
     title: str = Field(default="", max_length=300)
     excerpt: str = Field(default="", max_length=1200)
-    excerpt_kind: Literal["api_fields", "search_snippet", "none"] = "none"
+    excerpt_kind: Literal["api_fields", "search_snippet", "subtitle_excerpt", "none"] = "none"
     credibility: Literal["primary", "secondary", "unknown"] = "unknown"
     reason: str | None = None
     retrieved_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -44,7 +44,7 @@ class Evidence(Observation):
 
 
 class Query(Model):
-    adapter: Literal["github", "websearch"]
+    adapter: Literal["github", "websearch", "bilibili"]
     query: str = Field(min_length=1, max_length=500)
     purpose: str = Field(min_length=1, max_length=300)
 

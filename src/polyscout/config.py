@@ -28,6 +28,7 @@ class Settings:
     search_endpoint: str = "https://api.tavily.com/search"
     search_api_key: str = field(default="", repr=False)
     github_token: str = field(default="", repr=False)
+    bilibili_sessdata: str = field(default="", repr=False)  # BYO 登录态，v0.2 修订案
 
     def __post_init__(self):
         if not self.llm_base_url or not self.llm_model:
@@ -45,7 +46,8 @@ class Settings:
 
     @property
     def secrets(self) -> tuple[str, ...]:
-        return tuple(s for s in (self.llm_api_key, self.search_api_key, self.github_token) if s)
+        return tuple(s for s in (self.llm_api_key, self.search_api_key, self.github_token,
+                                 self.bilibili_sessdata) if s)
 
     @classmethod
     def from_env(cls):
@@ -58,6 +60,7 @@ class Settings:
                 ("search_endpoint", "POLYSCOUT_SEARCH_ENDPOINT", "https://api.tavily.com/search"),
                 ("search_api_key", "POLYSCOUT_SEARCH_API_KEY", ""),
                 ("github_token", "POLYSCOUT_GITHUB_TOKEN", ""),
+                ("bilibili_sessdata", "POLYSCOUT_BILIBILI_SESSDATA", ""),
             )
         }
         # 温度缺省为 None = 请求中不携带该字段；部分端点（如 kimi-k3）拒绝自定义温度

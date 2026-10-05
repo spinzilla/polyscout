@@ -16,11 +16,16 @@ class Transport:
         self.client = client
         self.counts: Counter = Counter()
 
-    async def request(self, service: str, method: str, url: str, timeout: float = 20, **kwargs) -> httpx.Response:
+    async def request(self, service: str, method: str, url: str, timeout: float = 20,
+                      cookies: dict | None = None, **kwargs) -> httpx.Response:
         # 适配器保持 20s 紧凑超时（防挂死）；LLM 推理调用由调用方传入更长超时
         self.counts[service] += 1
         request = self.client.build_request(method, url, timeout=timeout, **kwargs)
         request.headers.pop("cookie", None)
+        # 默认不外发任何 cookie（宪法默认）；仅当 adapter 显式申请（BYO 登录态，
+        # v0.2 修订案，见 REQUIREMENTS 第三轮）时才携带其显式给出的 cookie。
+        if cookies:
+            request.headers["cookie"] = "; ".join(f"{k}={v}" for k, v in cookies.items())
         # A provider may set cookies; no subsequent request may transmit them.
         try:
             response = await self.client.send(request, stream=True, follow_redirects=False)

@@ -1,9 +1,9 @@
-# PolyScout v0.1 architecture
+# PolyScout v0.2 architecture
 
-Status: implementation contract for the v0.1 Python package. This document describes
+Status: implementation contract for the v0.2 Python package. This document describes
 bounded behavior, not a claim of live provider acceptance. The frozen baseline is
-[REQUIREMENTS.md](REQUIREMENTS.md); the product hypothesis and its limits are in
-[SPIKE.md](SPIKE.md).
+[REQUIREMENTS.md](REQUIREMENTS.md) (including the 2026-10-05 third-round amendment);
+the product hypothesis and its limits are in [SPIKE.md](SPIKE.md).
 
 ## Scope and design
 
@@ -46,7 +46,7 @@ adapters run concurrently, queries inside one adapter run serially.
 | `compliance.access_policy` | Allowed channel and operator responsibilities |
 | `compliance.robots_policy` | API-only access; no direct target-page crawling |
 | `compliance.retention` | Literal `excerpts_and_links_only` |
-| `compliance.cookies_supported` | Literal false; no cookie configuration interface |
+| `compliance.cookies_supported` | False by default; True only for adapters whose platform keeps core content behind a login soft-wall (v0.2: bilibili). Such adapters accept only operator-supplied cookies (BYO), never bundled ones, and must enforce a per-run cookie-request budget |
 | `compliance.wall_action` | Literal `open_circuit_for_run` |
 
 Declarations are serialized to `run.json`. A compatible search endpoint may have
@@ -95,6 +95,25 @@ Bing style: GET a user-configured compatible endpoint with query parameters
 `webPages.value[].{name,url,snippet}`. This is protocol compatibility, not a promise
 that a legacy Microsoft service is still available. No Bing endpoint is assumed.
 
+Bilibili (v0.2): all requests are anonymous except subtitle endpoints when the
+operator supplies their own `POLYSCOUT_BILIBILI_SESSDATA` cookie. Flow:
+`GET /x/web-interface/nav` (wbi key material, returned even when unauthenticated)
+→ wbi-signed `GET /x/web-interface/wbi/search/type?search_type=video&keyword=...`
+(wbi signing is the platform's public web-client signature: mixin-key permutation +
+md5; computed locally, it is not a risk-control bypass) → per video
+`GET /x/web-interface/view?bvid=...` (metadata, anonymous) →
+`GET /x/player/v2?bvid=...&cid=...` (subtitle track list; the platform returns an
+empty track list to anonymous callers — a soft login wall measured 2026-10-05 on
+10/10 probed videos) → subtitle JSON download. Chinese tracks are preferred, then
+AI tracks. Subtitle excerpts are verbatim lines capped at 800 characters
+(`excerpt_kind=subtitle_excerpt`); videos without obtainable subtitles degrade to
+verbatim metadata field excerpts (`api_fields`), never paraphrased content.
+Risk-control business codes (-352/-412/-799) are hard walls; other non-zero codes
+are ordinary failures. Requests carrying the BYO cookie are hard-capped at 20 per
+run; beyond the budget the adapter degrades to anonymous behavior. A browser-class
+User-Agent is used because the provider rejects non-browser agents; this is
+declared in the adapter's access_policy rather than hidden.
+
 References: [GitHub repository REST API](https://docs.github.com/en/rest/repos/repos#get-a-repository),
 [Tavily search API](https://docs.tavily.com/documentation/api-reference/endpoint/search).
 Adapters do not claim that documentation review substitutes for live verification.
@@ -115,7 +134,7 @@ retrieval failures as equally typed records. Pydantic rejects unknown fields.
 | `url` | HTTP(S) URL or null | Required for retrieved evidence; API detail URL or search target |
 | `title` | string <=300 chars | Display label, not an evidentiary assertion |
 | `excerpt` | string <=1200 chars | Exact source fragments; empty on failure |
-| `excerpt_kind` | api_fields / search_snippet / none | Prevents snippets masquerading as page quotations |
+| `excerpt_kind` | api_fields / search_snippet / subtitle_excerpt / none | Prevents snippets masquerading as page quotations; subtitle_excerpt (v0.2) marks verbatim caption lines |
 | `credibility` | primary / secondary / unknown | Source provenance, not claim confidence |
 | `reason` | string or null | Stable failure code; mandatory on unavailable/blocked records |
 | `retrieved_at` | timezone-aware datetime | UTC capture time by default |
@@ -211,7 +230,7 @@ Configuration errors exit 2, unexpected failures 1, interruption 130.
 | --- | --- | --- |
 | Excerpts + links, no mirrors | bounded Observation fields, provider raw-content disabled, excerpt-only store | bounded snippets, raw integrity, no full responses |
 | Hard wall = detour | Transport classification, per-run Adapter circuit, no redirects/retries | 401/403/429/302, HTML/JSON walls, detail-wall short circuit |
-| No login-state distribution/cookies | no cookie config; outgoing Cookie header removed; no transcript persistence | response Set-Cookie is never sent back |
+| No login-state distribution | BYO-only cookies (2026-10-05 amendment): transport strips all outgoing cookies by default; an adapter may send only the exact operator-configured cookie it declared; per-run cookie budget enforced; no transcript persistence | response Set-Cookie is never sent back; default-strip regression tests; bilibili budget tests |
 | Respect robots and ToS | per-adapter declarations, API-only scope, provider terms responsibility | declarations persisted; no target-page requests |
 
 Robots/ToS declarations describe the access policy; an offline test cannot certify
@@ -225,10 +244,10 @@ a separate acceptance layer.
 | Q1 | English-first package/docs with Chinese Quick Start; Chinese content remains accepted |
 | Q2 | Library + CLI; MCP v0.3, no hosted web service |
 | Q3 | Existing Apache-2.0 LICENSE retained and package metadata declares it |
-| Q4 | GitHub + search now; Bilibili v0.2, CSDN v0.3; no Zhihu/WeChat adapter |
-| Q5 | Contract and enforcement mapping above |
+| Q4 | GitHub + search + Bilibili (v0.2) implemented; CSDN v0.3; no Zhihu/WeChat adapter |
+| Q5 | Contract and enforcement mapping above, including the amended BYO-cookie rule |
 | Q6 | BYOK OpenAI-compatible HTTP; no hosted quota or billing |
-| Q7 | Future Bilibili adapter: official CC first, optional local faster-whisper extra; no ASR dependency in v0.1 |
+| Q7 | Bilibili adapter: official/AI subtitle tracks via BYO cookie, metadata anonymously; ASR (faster-whisper extra) deferred past v0.2 for separate compliance review |
 | Q8 | Versioned Pydantic schema + JSONL + excerpt-only raw directory |
 | Q9 | Bounded custom planner and parallel adapters, zero orchestration frameworks |
 | Q10 | Five frozen cases and offline anonymization/two-judge scoring in evaluation.py; manual major-release gate, no paid CI calls |

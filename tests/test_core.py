@@ -90,8 +90,9 @@ def test_research_end_to_end_parallel_sources_and_confidence_caps(tmp_path):
                 if "round" in data:
                     return chat(plan())
                 return chat({"claims": [
-                    {"text": "The repository is archived.", "evidence_ids": ["E0001"], "confidence": "high", "rationale": "API field"},
-                    {"text": "Search describes maintenance concerns.", "evidence_ids": ["E0002"], "confidence": "high", "rationale": "Search result"},
+                    # v0.2 ID 顺序：E0001=bilibili 未中选缺口, E0002=github, E0003=websearch
+                    {"text": "The repository is archived.", "evidence_ids": ["E0002"], "confidence": "high", "rationale": "API field"},
+                    {"text": "Search describes maintenance concerns.", "evidence_ids": ["E0003"], "confidence": "high", "rationale": "Search result"},
                 ], "gaps": []})
             if request.url.path == "/search/repositories":
                 github_started.set()
@@ -107,13 +108,15 @@ def test_research_end_to_end_parallel_sources_and_confidence_caps(tmp_path):
             assert not client.is_closed
         return result, calls
     result, calls = asyncio.run(run())
-    assert result.requests == {"llm": 2, "github": 2, "websearch": 1}
+    # v0.2: mock 规划始终不选 bilibili → 首轮不满足全平台收敛，二轮规划去重后空转退出；
+    # 3 次 LLM 调用仍在架构预算（2 规划 + 1 综合）内
+    assert result.requests == {"llm": 3, "github": 2, "websearch": 1}
     records = EvidenceStore.read(result.run_dir)
-    assert len(records) == 2
+    assert len(records) == 3  # v0.2: bilibili 未被规划选中也会留下可审计的覆盖缺口记录
     report = (result.run_dir / "report.md").read_text(encoding="utf-8")
     assert "Confidence: medium" in report and "Confidence: low" in report
-    assert "[E0001](#e0001)" in report
-    assert json.loads((result.run_dir / "run.json").read_text())["llm_usage"]["reported_total_tokens"] == 84
+    assert "[E0002](#e0002)" in report
+    assert json.loads((result.run_dir / "run.json").read_text())["llm_usage"]["reported_total_tokens"] == 126
     for path in result.run_dir.rglob("*"):
         if path.is_file():
             assert "secret-value" not in path.read_text(encoding="utf-8")
@@ -131,7 +134,7 @@ def test_invalid_llm_and_hard_walls_produce_auditable_partial_report(tmp_path):
             return await research("RTOS", settings(), tmp_path, client=client)
     result = asyncio.run(run())
     assert result.status == "partial"
-    assert len(calls) == 3
+    assert len(calls) == 4  # LLM + github + websearch + bilibili(nav 即撞墙熔断)
     assert all(e.status == "blocked" for e in EvidenceStore.read(result.run_dir))
     assert "Insufficient evidence" in (result.run_dir / "report.md").read_text(encoding="utf-8")
 
@@ -274,7 +277,8 @@ def test_cancellation_retains_already_completed_source_batch(tmp_path):
             with pytest.raises(asyncio.CancelledError):
                 await task
         records = EvidenceStore.read(next(tmp_path.iterdir()))
-        assert len(records) == 1 and records[0].status == "retrieved"
+        # v0.2: bilibili 未中选缺口记录先于取消写入；已完成批次仍是唯一 retrieved
+        assert len(records) == 2 and sum(e.status == "retrieved" for e in records) == 1
     asyncio.run(run())
 
 

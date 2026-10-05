@@ -2,7 +2,7 @@
 
 **Break the walls between content platforms.** A deep-reconnaissance research agent that goes where search indexes can't: Bilibili video subtitles, GitHub API ground truth, and the deep layers of the Chinese web — then delivers every conclusion with verbatim evidence attached.
 
-> Status: v0.1 implementation — GitHub repository metadata + search APIs + evidence reports. Offline acceptance evidence is in `docs/validation/`; live provider behavior is not yet verified. Bilibili, CSDN and MCP remain future work.
+> Status: v0.2 implementation — GitHub repository metadata + search APIs + Bilibili video metadata/subtitles (subtitles require your own login cookie), with evidence reports. Offline acceptance evidence is in `docs/validation/`; live provider behavior is not yet verified. CSDN and MCP remain future work.
 
 [中文说明](#中文说明)
 
@@ -57,8 +57,9 @@ This project is **not a scraper**. Four rules are architectural constraints, enf
 - [x] Blind spike: differentiation validated (2 judge families, 3/3 wins)
 - [x] Requirements freeze (grilled with the design-tree method)
 - [x] Architecture: adapter interface, evidence store schema, planner
-- [ ] v1: GitHub + web search + Bilibili adapters, CLI
-- [ ] MCP server
+- [x] v0.1: GitHub + web search adapters, CLI, evidence store
+- [x] v0.2: Bilibili adapter (anonymous search/metadata + BYO-cookie subtitles)
+- [ ] v0.3: CSDN adapter + MCP server
 - [ ] Community adapter program + CI health probes
 
 ## License
@@ -83,7 +84,7 @@ Apache-2.0 — patent grant included, enterprise-friendly.
 
 纯 BYOK（自带 OpenAI 兼容端点 key），无托管、无计费、无锁定。
 
-> 当前为 v0.1 实现：GitHub 实查、搜索 API、证据报告；尚未经真实环境验证。B站、CSDN 与 MCP 留待后续版本。
+> 当前为 v0.2 实现：GitHub 实查、搜索 API、B站视频元数据/字幕（字幕需自带登录 cookie）、证据报告；尚未经真实环境验证。CSDN 与 MCP 留待后续版本。
 
 ## Quick Start
 
@@ -119,6 +120,9 @@ $env:POLYSCOUT_LLM_MODEL = '<your-model>'
 $env:POLYSCOUT_SEARCH_PROVIDER = 'tavily'
 $env:POLYSCOUT_SEARCH_ENDPOINT = 'https://api.tavily.com/search'
 $env:POLYSCOUT_SEARCH_API_KEY = '<your-search-key>'
+# Optional: your own Bilibili login cookie enables subtitle excerpts (BYO, never distributed).
+# Without it the Bilibili adapter still returns anonymous video search and metadata.
+$env:POLYSCOUT_BILIBILI_SESSDATA = '<your-own-sessdata>'
 # Optional: otherwise GitHub uses the anonymous public REST API.
 # $env:POLYSCOUT_GITHUB_TOKEN = '<optional-token>'
 uv run polyscout research "Compare maintenance of open-source RTOS projects" --output runs

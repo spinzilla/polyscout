@@ -12,7 +12,8 @@ class Compliance(Model):
     access_policy: str
     robots_policy: str
     retention: Literal["excerpts_and_links_only"] = "excerpts_and_links_only"
-    cookies_supported: Literal[False] = False
+    # v0.2 修订：默认 False；仅声明 BYO 登录态的 adapter（bilibili）为 True
+    cookies_supported: bool = False
     wall_action: Literal["open_circuit_for_run"] = "open_circuit_for_run"
 
 

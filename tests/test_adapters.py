@@ -163,3 +163,125 @@ def test_chinese_wall_message_and_headerless_html_stop_adapter():
         records, adapter = run_adapter(lambda r: response, GitHubAdapter)
         assert records[0].status == "blocked"
         assert adapter.wall_reason
+
+
+# ---------------- Bilibili adapter (v0.2) ----------------
+
+from polyscout.adapters import BilibiliAdapter
+from polyscout.adapters.bilibili import COOKIE_BUDGET, wbi_sign
+
+_NAV = {"code": -101, "data": {"wbi_img": {
+    "img_url": "https://i0.hdslb.com/bfs/wbi/" + "a" * 32 + ".png",
+    "sub_url": "https://i0.hdslb.com/bfs/wbi/" + "b" * 32 + ".png"}}}
+_VIEW = {"code": 0, "data": {"cid": 123, "title": "STM32 入门教程", "desc": "零基础讲解",
+                              "duration": 600, "pubdate": 1700000000, "owner": {"name": "某UP"}}}
+_SUBS = {"code": 0, "data": {"subtitle": {"subtitles": [
+    {"lan": "en", "lan_doc": "English", "subtitle_url": "//cdn.example/en.json"},
+    {"lan": "zh-CN", "lan_doc": "中文（自动生成）", "subtitle_url": "//cdn.example/zh.json"}]}}}
+_ZH_BODY = {"body": [{"from": 0.0, "to": 1.5, "content": "大家好，这里是第一课"},
+                     {"from": 1.5, "to": 3.0, "content": "今天我们讲寄存器"}]}
+
+
+def _bilibili_handler(search_payload, player_payload=_SUBS, sub_payload=_ZH_BODY, seen=None):
+    def handler(request):
+        if seen is not None:
+            seen.append(request)
+        path = request.url.path
+        if path == "/x/web-interface/nav":
+            return httpx.Response(200, json=_NAV)
+        if path == "/x/web-interface/wbi/search/type":
+            assert request.url.params["w_rid"] and request.url.params["wts"]
+            return httpx.Response(200, json=search_payload)
+        if path == "/x/web-interface/view":
+            return httpx.Response(200, json=_VIEW)
+        if path == "/x/player/v2":
+            return httpx.Response(200, json=player_payload)
+        if request.url.host == "cdn.example":
+            return httpx.Response(200, json=sub_payload)
+        return httpx.Response(404)
+    return handler
+
+
+def test_bilibili_wbi_sign_matches_public_algorithm():
+    import hashlib
+    from urllib.parse import urlencode
+    img, sub = "a" * 32, "b" * 32
+    raw = img + sub
+    from polyscout.adapters.bilibili import MIXIN_KEY_ENC_TAB
+    mixin = "".join(raw[i] for i in MIXIN_KEY_ENC_TAB)[:32]
+    signed = wbi_sign({"keyword": "rtos", "page": 1}, img, sub)
+    check = {k: v for k, v in signed.items() if k != "w_rid"}
+    assert signed["w_rid"] == hashlib.md5((urlencode(sorted(check.items())) + mixin).encode()).hexdigest()
+
+
+def test_bilibili_happy_path_subtitle_verbatim_and_byo_cookie():
+    seen = []
+    search = {"code": 0, "message": "0", "data": {"result": [{"bvid": "BV1xx411c7mD"}]}}
+    records, _ = run_adapter(_bilibili_handler(search, seen=seen),
+                             lambda t: BilibiliAdapter(t, "sess-secret"))
+    assert records[0].status == "retrieved"
+    assert records[0].excerpt_kind == "subtitle_excerpt"
+    assert records[0].excerpt == "大家好，这里是第一课\n今天我们讲寄存器"  # 中文轨优先于英文轨
+    assert str(records[0].url) == "https://www.bilibili.com/video/BV1xx411c7mD"
+    authed = [r for r in seen if "SESSDATA=sess-secret" in r.headers.get("cookie", "")]
+    assert {r.url.path if r.url.host != "cdn.example" else "cdn" for r in authed} == {"/x/player/v2", "cdn"}
+    assert all("sess-secret" not in str(r.url) for r in seen)
+
+
+def test_bilibili_anonymous_degrades_to_metadata_without_cookie():
+    seen = []
+    search = {"code": 0, "data": {"result": [{"bvid": "BV1xx411c7mD"}]}}
+    empty = {"code": 0, "data": {"subtitle": {"subtitles": []}}}
+    records, _ = run_adapter(_bilibili_handler(search, player_payload=empty, seen=seen),
+                             BilibiliAdapter)
+    assert records[0].status == "retrieved"
+    assert records[0].excerpt_kind == "api_fields"
+    assert '"title": "STM32 入门教程"' in records[0].excerpt
+    assert all("cookie" not in r.headers for r in seen)
+
+
+def test_bilibili_risk_control_is_hard_wall_and_circuits():
+    for code in (-352, -412):
+        calls = []
+        search = {"code": code, "message": "risk"}
+        records, adapter = run_adapter(_bilibili_handler(search, seen=calls),
+                                       BilibiliAdapter, ("one", "two"))
+        assert len(calls) == 2  # nav + 首次搜索；熔断后零网络
+        assert records[0].status == "blocked" and records[0].reason == f"bilibili_risk_control_{-code}"
+        assert records[1].reason.startswith("circuit_open:")
+
+
+def test_bilibili_business_error_is_not_a_wall():
+    search = {"code": -400, "message": "bad request"}
+    records, adapter = run_adapter(_bilibili_handler(search), BilibiliAdapter)
+    assert records[0].status == "unavailable" and records[0].reason == "bilibili_error_400"
+    assert not adapter.wall_reason
+
+
+def test_bilibili_cookie_budget_downgrades_later_requests(monkeypatch):
+    seen = []
+    monkeypatch.setattr("polyscout.adapters.bilibili.COOKIE_BUDGET", 1)
+    search = {"code": 0, "data": {"result": [{"bvid": "BV1xx411c7mD"}]}}
+    records, adapter = run_adapter(_bilibili_handler(search, seen=seen),
+                                   lambda t: BilibiliAdapter(t, "sess-secret"))
+    assert records[0].status == "retrieved"
+    cookie_hits = [r for r in seen if "SESSDATA" in r.headers.get("cookie", "")]
+    assert len(cookie_hits) == 1 and cookie_hits[0].url.path == "/x/player/v2"
+    assert adapter._cookie_used == 1
+
+
+def test_bilibili_invalid_bvid_and_expired_cookie_fallback():
+    search = {"code": 0, "data": {"result": [{"bvid": "not-a-bvid"}, {"bvid": "BV1xx411c7mD"}]}}
+    expired = {"code": -101, "message": "not logged in"}
+    records, _ = run_adapter(_bilibili_handler(search, player_payload=expired),
+                             lambda t: BilibiliAdapter(t, "sess-secret"))
+    assert records[0].reason == "bilibili_invalid_bvid"
+    assert records[1].status == "retrieved" and records[1].excerpt_kind == "api_fields"
+
+
+def test_bilibili_transport_cookie_opt_in_only():
+    # 默认路径不变：不显式申请 cookies 的 adapter 绝不外发 cookie（现有契约回归）
+    def handler(request):
+        assert "cookie" not in request.headers
+        return httpx.Response(200, json={"items": []})
+    run_adapter(handler, GitHubAdapter)

@@ -103,5 +103,5 @@ def render_report(question: str, records: list[Evidence], result: Synthesis,
                   f"HTTP attempts by service: {counts}. No automatic retries.",
                   f"LLM usage reported by provider: {tokens}. Monetary cost is not computed; consult your provider.",
                   "Citation IDs and provenance are checked mechanically; semantic entailment and external truth require human review.",
-                  "v0.1 covers GitHub repository metadata and search snippets only. Bilibili/ASR, CSDN, deep-page fetching and MCP are not implemented.", ""])
+                  "v0.2 covers GitHub repository metadata, search snippets, and Bilibili video metadata/subtitles (subtitles require an operator-supplied login cookie; anonymous runs receive metadata only). ASR, CSDN, deep-page fetching and MCP are not implemented.", ""])
     path.write_text("\n".join(lines), encoding="utf-8")
