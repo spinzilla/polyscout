@@ -179,10 +179,16 @@ _SUBS = {"code": 0, "data": {"subtitle": {"subtitles": [
     {"lan": "en", "lan_doc": "English", "subtitle_url": "//cdn.example/en.json"},
     {"lan": "zh-CN", "lan_doc": "中文（自动生成）", "subtitle_url": "//cdn.example/zh.json"}]}}}
 _ZH_BODY = {"body": [{"from": 0.0, "to": 1.5, "content": "大家好，这里是第一课"},
-                     {"from": 1.5, "to": 3.0, "content": "今天我们讲寄存器"}]}
+                     {"from": 1.5, "to": 590.0, "content": "今天我们讲寄存器"}]}
+_STALE_BODY = {"body": [{"from": 0.0, "to": 1.5, "content": "这条字幕只讲到 3 秒"},
+                        {"from": 1.5, "to": 3.0, "content": "后面全是旧轨残留"}]}
+_AI_AND_UPLOADER_SUBS = {"code": 0, "data": {"subtitle": {"subtitles": [
+    {"lan": "ai-zh", "lan_doc": "中文（AI）", "subtitle_url": "//cdn.example/ai.json"},
+    {"lan": "zh-Hans", "lan_doc": "中文（简体）", "subtitle_url": "//cdn.example/zh.json"}]}}}
 
 
-def _bilibili_handler(search_payload, player_payload=_SUBS, sub_payload=_ZH_BODY, seen=None):
+def _bilibili_handler(search_payload, player_payload=_SUBS, sub_payload=_ZH_BODY, seen=None,
+                      view_payload=_VIEW):
     def handler(request):
         if seen is not None:
             seen.append(request)
@@ -193,7 +199,7 @@ def _bilibili_handler(search_payload, player_payload=_SUBS, sub_payload=_ZH_BODY
             assert request.url.params["w_rid"] and request.url.params["wts"]
             return httpx.Response(200, json=search_payload)
         if path == "/x/web-interface/view":
-            return httpx.Response(200, json=_VIEW)
+            return httpx.Response(200, json=view_payload)
         if path == "/x/player/v2":
             return httpx.Response(200, json=player_payload)
         if request.url.host == "cdn.example":
@@ -221,11 +227,43 @@ def test_bilibili_happy_path_subtitle_verbatim_and_byo_cookie():
                              lambda t: BilibiliAdapter(t, "sess-secret"))
     assert records[0].status == "retrieved"
     assert records[0].excerpt_kind == "subtitle_excerpt"
-    assert records[0].excerpt == "大家好，这里是第一课\n今天我们讲寄存器"  # 中文轨优先于英文轨
+    assert records[0].excerpt == ("[subtitle: zh-CN | uploader | auth=cookie | coverage=98%]\n"
+                                  "大家好，这里是第一课\n今天我们讲寄存器")  # 中文轨优先于英文轨
     assert str(records[0].url) == "https://www.bilibili.com/video/BV1xx411c7mD"
     authed = [r for r in seen if "SESSDATA=sess-secret" in r.headers.get("cookie", "")]
     assert {r.url.path if r.url.host != "cdn.example" else "cdn" for r in authed} == {"/x/player/v2", "cdn"}
     assert all("sess-secret" not in str(r.url) for r in seen)
+
+
+def test_bilibili_subtitle_stale_suspect_flagged_on_low_coverage():
+    # 覆盖率 <85%（换源残留旧轨特征，2026-10-05 实测 40%）→ 摘录必须带 STALE-SUSPECT 警告
+    search = {"code": 0, "data": {"result": [{"bvid": "BV1xx411c7mD"}]}}
+    records, _ = run_adapter(_bilibili_handler(search, sub_payload=_STALE_BODY),
+                             lambda t: BilibiliAdapter(t, "sess-secret"))
+    assert records[0].excerpt_kind == "subtitle_excerpt"
+    assert "coverage=0%" in records[0].excerpt
+    assert "STALE-SUSPECT" in records[0].excerpt
+    assert "这条字幕只讲到 3 秒" in records[0].excerpt  # 仍如实摘录，只是挂风险标注
+
+
+def test_bilibili_uploader_track_preferred_over_ai_track():
+    # 同为中文轨时 UP 主上传轨优先于 AI 轨（换源残留的几乎都是 AI 轨）
+    search = {"code": 0, "data": {"result": [{"bvid": "BV1xx411c7mD"}]}}
+    records, _ = run_adapter(
+        _bilibili_handler(search, player_payload=_AI_AND_UPLOADER_SUBS),
+        lambda t: BilibiliAdapter(t, "sess-secret"))
+    assert records[0].excerpt.startswith("[subtitle: zh-Hans | uploader |")
+
+
+def test_bilibili_subtitle_without_duration_skips_coverage():
+    # 元数据缺 duration → 不算覆盖率、不误报 STALE-SUSPECT，provenance 其余字段照在
+    view = {"code": 0, "data": {"cid": 123, "title": "无时长视频"}}
+    search = {"code": 0, "data": {"result": [{"bvid": "BV1xx411c7mD"}]}}
+    records, _ = run_adapter(_bilibili_handler(search, view_payload=view),
+                             lambda t: BilibiliAdapter(t, "sess-secret"))
+    assert records[0].excerpt_kind == "subtitle_excerpt"
+    assert records[0].excerpt.startswith("[subtitle: zh-CN | uploader | auth=cookie]")
+    assert "STALE-SUSPECT" not in records[0].excerpt
 
 
 def test_bilibili_anonymous_degrades_to_metadata_without_cookie():

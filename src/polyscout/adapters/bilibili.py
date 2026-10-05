@@ -36,6 +36,10 @@ _BVID_RE = re.compile(r"^BV1[0-9A-Za-z]{9}$")
 # 带 cookie 请求的 per-run 硬预算（防账号侧风控敞口；超出即降级匿名）
 COOKIE_BUDGET = 20
 
+# 字幕覆盖率阈值：末条时间戳 ÷ 视频时长低于此值 → 疑似换源残留旧字幕轨
+# （2026-10-05 实测：换源视频的陈旧 AI 轨内容与现版本完全无关，覆盖仅 40%）
+STALE_COVERAGE = 0.85
+
 
 def wbi_sign(params: dict, img_key: str, sub_key: str) -> dict:
     """平台 web 端公开签名：mixin key 重排 + 参数排序拼接 + md5。"""
@@ -149,7 +153,7 @@ class BilibiliAdapter(Adapter):
             raise FetchError("bilibili_invalid_video_payload")
         title = title.strip()[:300]
 
-        excerpt = await self._subtitle(bvid, cid)
+        excerpt = await self._subtitle(bvid, cid, info.get("duration"))
         if excerpt:
             return Observation(adapter="bilibili", query=query, status="retrieved", url=url,
                                title=title, excerpt=excerpt, excerpt_kind="subtitle_excerpt",
@@ -171,12 +175,17 @@ class BilibiliAdapter(Adapter):
                            title=title, excerpt="\n".join(fields)[:1200],
                            excerpt_kind="api_fields", credibility="secondary")
 
-    async def _subtitle(self, bvid: str, cid: int) -> str:
-        """返回逐字字幕摘录（≤800 字符，整行截断）；不可得返回空串。匿名下平台恒返回空轨。"""
+    async def _subtitle(self, bvid: str, cid: int, duration) -> str:
+        """返回逐字字幕摘录（provenance 头部 + ≤800 字符正文）；不可得返回空串。匿名下平台恒返回空轨。
+
+        头部记录 轨 lan / 来源（uploader|ai）/ 认证方式 / 覆盖率；覆盖率 < STALE_COVERAGE
+        追加 STALE-SUSPECT 警告——换源视频的旧字幕轨内容可能完全不属于当前视频。
+        """
+        cookies = self._auth_cookies()
         response = await self.transport.request(
             "bilibili", "GET", "https://api.bilibili.com/x/player/v2",
             params={"bvid": bvid, "cid": cid}, headers=self.headers,
-            cookies=self._auth_cookies())
+            cookies=cookies)
         try:
             tracks = (_json(response).get("subtitle") or {}).get("subtitles")
         except FetchError as exc:
@@ -186,11 +195,16 @@ class BilibiliAdapter(Adapter):
             raise
         if not isinstance(tracks, list) or not tracks:
             return ""
-        # 选轨：中文字幕优先，其次 AI 字幕，否则第一轨
+        # 选轨：UP主上传中文字幕 > 其它上传轨 > AI 中文轨 > 其它 AI 轨
+        # （AI 轨 lan 带 ai 前缀，如 ai-zh；换源残留的几乎都是 AI 轨）
         def rank(track):
             lan = str(track.get("lan", ""))
-            return (0 if lan.startswith("zh") else 1 if lan == "ai" else 2)
+            ai = lan.startswith("ai")
+            zh = "zh" in lan
+            return (0 if (zh and not ai) else 1 if not ai else 2 if zh else 3)
         track = sorted(tracks, key=rank)[0]
+        lan = str(track.get("lan", ""))[:20]
+        source = "ai" if lan.startswith("ai") else "uploader"
         sub_url = str(track.get("subtitle_url", ""))
         if sub_url.startswith("//"):
             sub_url = "https:" + sub_url
@@ -207,8 +221,15 @@ class BilibiliAdapter(Adapter):
             return ""
         lines: list[str] = []
         total = 0
+        last_end = 0.0
         for entry in body:
-            content = entry.get("content") if isinstance(entry, dict) else None
+            if not isinstance(entry, dict):
+                continue
+            try:
+                last_end = max(last_end, float(entry.get("to") or 0))
+            except (TypeError, ValueError):
+                pass
+            content = entry.get("content")
             if not isinstance(content, str) or not content.strip():
                 continue
             line = content.strip()
@@ -216,4 +237,16 @@ class BilibiliAdapter(Adapter):
                 break
             lines.append(line)
             total += len(line)
-        return "\n".join(lines)
+        if not lines:
+            return ""
+        auth = "cookie" if cookies else "anonymous"
+        header = f"[subtitle: {lan} | {source} | auth={auth}"
+        coverage = None
+        if isinstance(duration, (int, float)) and duration > 0 and last_end > 0:
+            coverage = min(last_end / duration, 9.99)
+            header += f" | coverage={coverage:.0%}"
+        header += "]"
+        if coverage is not None and coverage < STALE_COVERAGE:
+            header += (f"\n[STALE-SUSPECT: 字幕仅覆盖视频 {coverage:.0%}，疑似换源残留旧轨，"
+                       "内容未必属于当前视频——引用前必须复核]")
+        return header + "\n" + "\n".join(lines)
