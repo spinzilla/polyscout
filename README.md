@@ -2,7 +2,7 @@
 
 **Break the walls between content platforms.** A deep-reconnaissance research agent that goes where search indexes can't: Bilibili video subtitles, GitHub API ground truth, and the deep layers of the Chinese web — then delivers every conclusion with verbatim evidence attached.
 
-> Status: v0.3a implementation — GitHub repository metadata + search APIs + Bilibili video metadata/subtitles + CSDN best-effort anonymous article excerpts, with evidence reports. Offline acceptance evidence is in `docs/validation/`; live provider behavior is not yet verified. MCP remains future work.
+> Status: v0.3b implementation — GitHub repository metadata + search APIs + Bilibili video metadata/subtitles + CSDN best-effort anonymous article excerpts, with a minimal stdio MCP server. Offline acceptance evidence is in `docs/validation/`; live provider behavior is not yet verified.
 
 [中文说明](#中文说明)
 
@@ -59,7 +59,7 @@ This project is **not a scraper**. Four rules are architectural constraints, enf
 - [x] Architecture: adapter interface, evidence store schema, planner
 - [x] v0.1: GitHub + web search adapters, CLI, evidence store
 - [x] v0.2: Bilibili adapter (anonymous search/metadata + BYO-cookie subtitles)
-- [ ] v0.3: MCP server（CSDN adapter 已在 v0.3a 切片实现）
+- [x] v0.3b: minimal MCP server（`quick_search` + `get_sources`）；异步 research 未纳入
 - [ ] Community adapter program + CI health probes
 
 ## License
@@ -84,7 +84,7 @@ Apache-2.0 — patent grant included, enterprise-friendly.
 
 纯 BYOK（自带 OpenAI 兼容端点 key），无托管、无计费、无锁定。
 
-> 当前为 v0.3a 实现：GitHub 实查、搜索 API、B站视频元数据/字幕（字幕需自带登录 cookie）、CSDN 尽力而为匿名摘录、证据报告；尚未经真实环境验证。MCP 留待后续版本。
+> 当前为 v0.3b 实现：GitHub 实查、搜索 API、B站视频元数据/字幕（字幕需自带登录 cookie）、CSDN 尽力而为匿名摘录、最小 MCP 只读接口、证据报告；尚未经真实环境验证。
 
 ## Quick Start
 

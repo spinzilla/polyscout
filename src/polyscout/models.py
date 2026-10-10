@@ -44,7 +44,7 @@ class Evidence(Observation):
 
 
 class Query(Model):
-    adapter: Literal["github", "websearch", "bilibili"]
+    adapter: Literal["github", "websearch", "bilibili", "csdn"]
     query: str = Field(min_length=1, max_length=500)
     purpose: str = Field(min_length=1, max_length=300)
 

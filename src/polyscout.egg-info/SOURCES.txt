@@ -19,8 +19,11 @@ src/polyscout.egg-info/requires.txt
 src/polyscout.egg-info/top_level.txt
 src/polyscout/adapters/__init__.py
 src/polyscout/adapters/base.py
+src/polyscout/adapters/bilibili.py
+src/polyscout/adapters/csdn.py
 src/polyscout/adapters/github.py
 src/polyscout/adapters/websearch.py
 tests/test_adapters.py
 tests/test_core.py
+tests/test_csdn.py
 tests/test_evaluation.py

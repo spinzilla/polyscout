@@ -10,7 +10,9 @@ the product hypothesis and its limits are in [SPIKE.md](SPIKE.md).
 The Python library is the core; Typer is a thin CLI. Runtime dependencies are only
 httpx, pydantic and typer. JSONL persistence and orchestration use the standard
 library. Pytest is a development dependency; setuptools is build tooling only.
-There is no hosted service, managed quota, billing, browser automation or MCP server.
+There is no hosted service, managed quota, billing or browser automation. The v0.3b
+MCP server is a thin stdio entry point exposing only bounded source queries and
+adapter declarations; it does not host a web service or research task queue.
 
 ```text
 CLI / Python caller -> Settings -> planner.research
@@ -242,7 +244,7 @@ a separate acceptance layer.
 | Requirement | v0.1 implementation or explicit future boundary |
 | --- | --- |
 | Q1 | English-first package/docs with Chinese Quick Start; Chinese content remains accepted |
-| Q2 | Library + CLI; MCP v0.3, no hosted web service |
+| Q2 | Library + CLI + minimal stdio MCP; no hosted web service |
 | Q3 | Existing Apache-2.0 LICENSE retained and package metadata declares it |
 | Q4 | GitHub + search + Bilibili (v0.2) + CSDN best-effort (v0.3a); no Zhihu/WeChat adapter |
 | Q5 | Contract and enforcement mapping above, including the amended BYO-cookie rule |
@@ -251,7 +253,7 @@ a separate acceptance layer.
 | Q8 | Versioned Pydantic schema + JSONL + excerpt-only raw directory |
 | Q9 | Bounded custom planner and parallel adapters, zero orchestration frameworks |
 | Q10 | Five frozen cases and offline anonymization/two-judge scoring in evaluation.py; manual major-release gate, no paid CI calls |
-| Q11 | v0.1 boundaries as above; CSDN v0.3a standalone adapter; MCP/ASR remain separate slices |
+| Q11 | CSDN v0.3a and minimal MCP v0.3b; async research/MCP submit-poll and ASR remain separate slices |
 | Q12 | Python >=3.11, allowed runtime stack and pytest |
 | Q13 | Student/community project, best-effort issues, no SLA; public live CI health dashboard remains a future release/infrastructure task |
 
