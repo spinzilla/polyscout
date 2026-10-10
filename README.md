@@ -2,7 +2,7 @@
 
 **Break the walls between content platforms.** A deep-reconnaissance research agent that goes where search indexes can't: Bilibili video subtitles, GitHub API ground truth, and the deep layers of the Chinese web — then delivers every conclusion with verbatim evidence attached.
 
-> Status: v0.2 implementation — GitHub repository metadata + search APIs + Bilibili video metadata/subtitles (subtitles require your own login cookie), with evidence reports. Offline acceptance evidence is in `docs/validation/`; live provider behavior is not yet verified. CSDN and MCP remain future work.
+> Status: v0.3a implementation — GitHub repository metadata + search APIs + Bilibili video metadata/subtitles + CSDN best-effort anonymous article excerpts, with evidence reports. Offline acceptance evidence is in `docs/validation/`; live provider behavior is not yet verified. MCP remains future work.
 
 [中文说明](#中文说明)
 
@@ -14,7 +14,7 @@ Every deep-research product on the market — OpenAI/Gemini/Perplexity Deep Rese
 
 - 🎬 **Bilibili** — hours of dense engineering tutorials locked inside videos (invisible to search)
 - 🐙 **GitHub** — repos whose *actual* maintenance state contradicts their marketing (an archived repo was still being recommended as "enterprise-grade" two days after archival — our spike caught this, commercial products didn't)
-- 🧱 **Walled gardens** — Zhihu, WeChat official accounts, CSDN deep content
+- 🧱 **Walled gardens** — Zhihu, WeChat official accounts, and CSDN pages that return a hard wall or no extractable article body
 
 We ran a blind spike to prove this matters: 3 cross-platform research questions, our multi-platform recon process vs. a leading free commercial deep-research product, scored blind by **two independent judge models from different families** (deepseek-v4-pro, gpt-6-astra). **Our process won all 3 rounds under both judges, by an average margin of ~+38 points /100** — decisively on the "unique source penetration" dimension. Full methodology: [docs/SPIKE.md](docs/SPIKE.md).
 
@@ -35,7 +35,7 @@ question → planner → source router (per-platform adapters)
 | Web search | Tavily / Bing / compatible APIs | baseline |
 | GitHub | official REST API | ground-truth repo stats |
 | Bilibili | subtitle / ASR transcription | flagship differentiator |
-| CSDN | best-effort | adapter interface open for community |
+| CSDN | best-effort anonymous search/article excerpts | 521/验证码/登录墙记录 gap；仅摘录+链接 |
 
 Zhihu / WeChat official accounts are **explicitly out of v1 scope** (hard walls + compliance); the adapter interface leaves room for the community.
 
@@ -59,7 +59,7 @@ This project is **not a scraper**. Four rules are architectural constraints, enf
 - [x] Architecture: adapter interface, evidence store schema, planner
 - [x] v0.1: GitHub + web search adapters, CLI, evidence store
 - [x] v0.2: Bilibili adapter (anonymous search/metadata + BYO-cookie subtitles)
-- [ ] v0.3: CSDN adapter + MCP server
+- [ ] v0.3: MCP server（CSDN adapter 已在 v0.3a 切片实现）
 - [ ] Community adapter program + CI health probes
 
 ## License
@@ -84,7 +84,7 @@ Apache-2.0 — patent grant included, enterprise-friendly.
 
 纯 BYOK（自带 OpenAI 兼容端点 key），无托管、无计费、无锁定。
 
-> 当前为 v0.2 实现：GitHub 实查、搜索 API、B站视频元数据/字幕（字幕需自带登录 cookie）、证据报告；尚未经真实环境验证。CSDN 与 MCP 留待后续版本。
+> 当前为 v0.3a 实现：GitHub 实查、搜索 API、B站视频元数据/字幕（字幕需自带登录 cookie）、CSDN 尽力而为匿名摘录、证据报告；尚未经真实环境验证。MCP 留待后续版本。
 
 ## Quick Start
 

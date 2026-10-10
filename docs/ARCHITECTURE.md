@@ -40,7 +40,7 @@ adapters run concurrently, queries inside one adapter run serially.
 
 | Declaration field | Meaning / invariant |
 | --- | --- |
-| `name` | Stable platform name: `github` or `websearch` |
+| `name` | Stable platform name: `github`, `websearch`, `bilibili` or `csdn` |
 | `capabilities` | Explicit supported operations; never advertise unimplemented crawling |
 | `compliance.terms_url` | Provider terms reference; not a legal approval certificate |
 | `compliance.access_policy` | Allowed channel and operator responsibilities |
@@ -244,14 +244,14 @@ a separate acceptance layer.
 | Q1 | English-first package/docs with Chinese Quick Start; Chinese content remains accepted |
 | Q2 | Library + CLI; MCP v0.3, no hosted web service |
 | Q3 | Existing Apache-2.0 LICENSE retained and package metadata declares it |
-| Q4 | GitHub + search + Bilibili (v0.2) implemented; CSDN v0.3; no Zhihu/WeChat adapter |
+| Q4 | GitHub + search + Bilibili (v0.2) + CSDN best-effort (v0.3a); no Zhihu/WeChat adapter |
 | Q5 | Contract and enforcement mapping above, including the amended BYO-cookie rule |
 | Q6 | BYOK OpenAI-compatible HTTP; no hosted quota or billing |
 | Q7 | Bilibili adapter: official/AI subtitle tracks via BYO cookie, metadata anonymously; ASR (faster-whisper extra) deferred past v0.2 for separate compliance review |
 | Q8 | Versioned Pydantic schema + JSONL + excerpt-only raw directory |
 | Q9 | Bounded custom planner and parallel adapters, zero orchestration frameworks |
 | Q10 | Five frozen cases and offline anonymization/two-judge scoring in evaluation.py; manual major-release gate, no paid CI calls |
-| Q11 | v0.1 boundaries as above; no premature MCP/CSDN/ASR stubs |
+| Q11 | v0.1 boundaries as above; CSDN v0.3a standalone adapter; MCP/ASR remain separate slices |
 | Q12 | Python >=3.11, allowed runtime stack and pytest |
 | Q13 | Student/community project, best-effort issues, no SLA; public live CI health dashboard remains a future release/infrastructure task |
 
