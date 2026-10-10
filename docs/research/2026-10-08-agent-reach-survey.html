@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent-Reach 调研 × PolyScout 影响分析（2026-10-08）</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1a1d23;--mut:#5b6472;--line:#e3e6eb;
+--a:#2563eb;--a2:#eff6ff;--ok:#15803d;--okbg:#f0fdf4;--warn:#b45309;--warnbg:#fffbeb;--bad:#b91c1c;--badbg:#fef2f2}
+@media(prefers-color-scheme:dark){:root{--bg:#111418;--card:#1a1f27;--ink:#e6e9ef;--mut:#9aa4b2;--line:#2a3140;
+--a:#60a5fa;--a2:#17233a;--ok:#4ade80;--okbg:#12291b;--warn:#fbbf24;--warnbg:#2b2110;--bad:#f87171;--badbg:#2b1515}}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.75 "Segoe UI","Microsoft YaHei",system-ui,sans-serif;padding:28px 14px 60px}
+.wrap{max-width:780px;margin:0 auto}
+h1{font-size:24px;margin-bottom:4px}
+.sub{color:var(--mut);font-size:13px;margin-bottom:20px}
+h2{font-size:18px;margin:34px 0 12px;padding-left:10px;border-left:4px solid var(--a)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.hero{background:var(--a2);border:1px solid var(--a);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.hero h2{border:none;padding:0;margin:0 0 8px;font-size:17px;color:var(--a)}
+.hero ol{margin-left:20px}
+.hero li{margin-bottom:8px}
+.verdict{font-size:16px;font-weight:600;background:var(--okbg);border:1px solid var(--ok);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.kv{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:none}
+.k{width:110px;flex:none;color:var(--mut);font-size:13px;padding-top:2px}
+.v{flex:1;font-weight:600}
+.v small{display:block;font-weight:400;color:var(--mut)}
+table.cmp{width:100%;border-collapse:collapse;font-size:14px}
+table.cmp th,table.cmp td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+table.cmp th{background:var(--a2);font-size:13px}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+summary{cursor:pointer;padding:13px 16px;font-weight:600;list-style:none;display:flex;align-items:center;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary .tag{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--a2);color:var(--a)}
+summary .arrow{margin-left:auto;color:var(--mut);transition:transform .15s}
+details[open] summary .arrow{transform:rotate(90deg)}
+.body{padding:0 16px 14px 16px}
+.body ul{margin:6px 0 10px 20px}
+.body li{margin-bottom:6px}
+.act{background:var(--okbg);border-left:3px solid var(--ok);border-radius:6px;padding:9px 12px;font-size:14px;margin-top:8px}
+.act b{color:var(--ok)}
+.bar{height:7px;border-radius:99px;background:var(--a);display:inline-block;vertical-align:middle;margin-right:8px}
+.wlab{font-size:12px;color:var(--mut)}
+.risk{border-left:3px solid var(--warn);background:var(--warnbg);border-radius:6px;padding:10px 13px;margin-bottom:9px;font-size:14px}
+.risk b{color:var(--warn)}
+a{color:var(--a);text-decoration:none}
+a:hover{text-decoration:underline}
+.refs{font-size:13.5px}
+.refs li{margin-bottom:5px}
+.note{font-size:12.5px;color:var(--mut);margin-top:26px;padding-top:12px;border-top:1px solid var(--line)}
+code{background:var(--a2);border-radius:4px;padding:1px 5px;font-size:13px}
+</style></head><body><div class="wrap">
+<h1>Agent-Reach 调研 × PolyScout 影响分析</h1>
+<div class="sub">调查对象：<a href="https://github.com/Panniantong/Agent-Reach">github.com/Panniantong/Agent-Reach</a> @ commit <code>94f06c1</code>（2026-10-08 只读源码精读，未实跑）｜PolyScout v0.2.1 基线</div>
+
+<div class="hero"><h2>我现在该干什么（PolyScout 视角）</h2><ol><li><b>① 采纳进 v0.3 设计</b>　把「后端候选列表 + probe 四态探测 + doctor 自检」写进 v0.3（CSDN + MCP）设计文档的 adapter 健康检查章节——只取探测层，不取「裸调上游」形态。</li><li><b>② 候选池 + 合规审</b>　Exa（issue #14）、Jina Reader（CSDN/通用网页）进候选池；各补一条合规评估（第三方端点预算控制 / 全文输出的镜像边界），审过再写码。</li><li><b>③ B站路线维持</b>　yt-dlp 已死（412 实证）记进坑清单；自研 adapter + BYO SESSDATA 不变；bili-cli 停更纳入外部监测。</li></ol></div>
+
+<div class="verdict">一句话：它不是 PolyScout 的竞品而是「接入层」参照——路线不变（自研 adapter + 证据链不动），值得拿走的是「后端候选路由 + probe 真实探测 + doctor 自检」这套运维层机制，外加两个待合规审的信源候选（Exa / Jina Reader）。</div>
+
+<h2>项目概况</h2>
+<div class="card"><div class="kv"><div class="k">Star / Fork</div><div class="v">93,915 / 8,214<small>2026-02-24 创建，约 7 个半月冲到顶流；有赞助商位与营销投放，star 增速含推广成分，不等于代码质量背书</small></div></div><div class="kv"><div class="k">活跃度</div><div class="v">极高<small>调查当日（2026-10-08）仍有提交；CHANGELOG 逐版本详录根因</small></div></div><div class="kv"><div class="k">License / 语言</div><div class="v">MIT / Python 3.10+<small>v1.5.0；依赖极轻（requests / feedparser / yt-dlp 等 6 个）</small></div></div><div class="kv"><div class="k">测试</div><div class="v">34 个测试文件<small>含 cookie 权限、URL 安全、凭据擦除、doctor 凭据边界等安全专项测试</small></div></div><div class="kv"><div class="k">定位</div><div class="v">能力层（capability layer）<small>负责选型/安装/体检/路由，不做读取本身——读取由 Agent 直接调上游 CLI，无包装层</small></div></div><div class="kv"><div class="k">本次调查方式</div><div class="v">只读源码精读<small>commit 94f06c1 zipball；未安装、未实跑，实跑结论一律标注</small></div></div></div>
+
+<h2>定位对比：接入层 vs 证据层</h2>
+<div class="card" style="padding:6px 0 0"><table class="cmp"><tr><th></th><th style="width:44%">Agent-Reach</th><th>PolyScout</th></tr><tr><th style='width:88px'>它管什么</th><td>让 Agent「能读到」：选型、安装、体检、后端路由</td><td>让结论「可信」：证据链、逐字引用、provenance、合规宪法、预算熔断</td></tr><tr><th style='width:88px'>核心抽象</th><td>Channel（平台）→ backends 有序候选列表 → active_backend</td><td>Adapter（平台）→ 统一读取层 → Evidence Store 归一化</td></tr><tr><th style='width:88px'>失效应对</th><td>调整列表顺序换代（yt-dlp→bili-cli 实例），doctor 报告当前后端</td><td>目前单 adapter 硬编码，无后端候选与体检概念</td></tr><tr><th style='width:88px'>输出形态</th><td>裸命令输出，Agent 自行解读</td><td>摘录+链接+覆盖率护栏+STALE-SUSPECT 标记</td></tr><tr><th style='width:88px'>合规姿态</th><td>BYO cookie + 专用小号警告；无 robots/ToS 内嵌声明</td><td>合规宪法四条 + 每 adapter 内嵌声明 + 硬预算 20 次/run</td></tr></table><div style="padding:12px 14px"><div class="act"><b>关系判定：</b>不是竞品，是不同层：它是「接入层」，PolyScout 是「证据层」——可借鉴其接入层机制，不可照搬其「裸调上游」形态（会绕过 Evidence Store）</div></div></div>
+
+<h2>核心机制（它做对了什么）</h2>
+<div class="card"><b>Channel 基类 + 有序后端列表</b><p style="margin:6px 0 4px">每个平台一个 Channel，backends[0] 为首选、其余为备选；「换接入方式=调整列表顺序，不是重写代码」。用户可用 &lt;channel&gt;_backend 配置/环境变量强制指定。</p><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/base.py#L12-22">channels/base.py:12-22, 34, 45-59 ↗</a></div><div class="card"><b>probe_command 四态真实探测</b><p style="margin:6px 0 4px">区分 missing / broken / timeout / error——特别识别「stale venv shim」：shutil.which() 找得到但 exec 失败（系统 Python 升级后 pipx 安装断链）。doctor 报的是真实健康度，不是文件存在性。</p><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/probe.py#L1-13">probe.py:1-13, 106-110 ↗</a></div><div class="card"><b>doctor 一处看全平台</b><p style="margin:6px 0 4px">agent-reach doctor --json 输出每平台当前 active_backend 与修复处方；断链后端的处方即使被兜底也会带出。MCP server 只暴露 get_status 一个工具，接口克制。</p><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/integrations/mcp_server.py#L1-9">integrations/mcp_server.py:1-9, 43-49 ↗</a></div><div class="card"><b>SKILL.md 路由表分发</b><p style="margin:6px 0 4px">安装=把 SKILL.md 写进 Agent 的 skills 目录：路由表+常驻规则（动手前先体检、声明在用什么后端、失败按 runbook、顺手 check-update）+ references/*.md 分类命令手册。</p><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/skill/SKILL.md#L26-44">skill/SKILL.md:26-44 ↗</a></div>
+
+<h2>对 PolyScout 的六条影响（按相关度排序）</h2>
+<details><summary><span class="tag">直接情报 · B站</span>I1. B站后端路线的实证情报：排除 yt-dlp，确认自研 adapter 方向<span class="arrow">▶</span></summary>
+<div class="body"><div style="padding:8px 0 2px"><span class="bar" style="width:66px"></span><span class="wlab">相关度 ●●●</span></div><ul><li>yt-dlp 已被 B站风控全面 412 封死（2026-06 实测：最新版、直连、代理、暖 cookie 全部无效）——PolyScout 若曾把 yt-dlp 列为 B站候选，可彻底排除。</li><li>bili-cli 免登录搜索/详情当前可用，但上游 2026-03 起停更（1,068 star，最后 push 2026-03-14）——作为对照信号存在，不宜作为主依赖引入。</li><li>其字幕路线是 OpenCLI（复用桌面 Chrome 登录态，29.9k star）；PolyScout 的 BYO SESSDATA + wbi 公开签名路线更轻、无浏览器依赖，且与它同属 BYO 登录态范式——外部选型间接确认 v0.2 路线仍在健康路径上。</li></ul>
+<div class="act"><b>对 PolyScout 的动作：</b>维持自研 adapter；把「yt-dlp 已死（412，2026-06 实测）」记进项目坑清单；bili-cli 停更信号纳入 B站 adapter 的外部环境监测。</div>
+<div style="margin-top:8px"><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/bilibili.py#L1-10">channels/bilibili.py:1-10, 91-94 ↗</a>　<a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/skill/references/video.md#L71-112">references/video.md:71-112 ↗</a>　<a class="wlab" href="https://github.com/public-clis/bilibili-cli">bili-cli 仓库元数据（2026-10-08 API 实测） ↗</a></div></div></details><details><summary><span class="tag">架构借鉴 · v0.3+</span>I2. 「后端路由 + 真实探测 + doctor」机制：补 PolyScout 的运维层空白<span class="arrow">▶</span></summary>
+<div class="body"><div style="padding:8px 0 2px"><span class="bar" style="width:66px"></span><span class="wlab">相关度 ●●●</span></div><ul><li>PolyScout 现状：单 adapter 硬编码，平台接口变动时只能改代码重发版；无「当前信源健康度」的自检入口。</li><li>Agent-Reach 的三件套可直接映射：backends 有序候选列表（换代=调序）、probe_command 四态探测（尤其 stale-venv-shim 识别，Windows 上 pipx/uv 场景高发）、doctor --json 一处汇总各平台 active_backend 与修复处方。</li><li>v0.2.1 的字幕覆盖率护栏是「内容质量」维度；它的 probe/doctor 是「信源可达性」维度——两者正交，可合并为 adapter 健康检查的统一设计。</li></ul>
+<div class="act"><b>对 PolyScout 的动作：</b>v0.3 设计时评估：为 adapter 层增加 check()/doctor 子命令与后端候选抽象（范围先限于探测，不照搬「Agent 裸调上游」——那会绕过 Evidence Store 与预算控制）。</div>
+<div style="margin-top:8px"><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/base.py#L12-22">channels/base.py:12-22 ↗</a>　<a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/probe.py#L1-13">probe.py:1-13 ↗</a>　<a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/integrations/mcp_server.py#L1-9">mcp_server.py:1-9 ↗</a></div></div></details><details><summary><span class="tag">候选信源 · issue #14 / v0.3</span>I3. Exa 与 Jina Reader 进入 websearch / CSDN 候选池（须过合规审）<span class="arrow">▶</span></summary>
+<div class="body"><div style="padding:8px 0 2px"><span class="bar" style="width:44px"></span><span class="wlab">相关度 ●●○</span></div><ul><li>Exa via mcporter：全网语义搜索，MCP 端点免 API key（mcp.exa.ai/mcp）。对应 PolyScout issue #14（websearch adapter 真实 key 未验）的潜在零成本路径——但请求经第三方 MCP 端点，须先确认能纳入 Transport 预算/熔断/取消控制（与 YouTube 准入条件 3 同一条纪律）。</li><li>Jina Reader（r.jina.ai）：免费免 key 把任意网页转 Markdown，自带反爬验证页识别（Cloudflare challenge 检测）与 5MB 响应上限。可作为 CSDN adapter（v0.3）与通用网页读取的候选后端——注意它是第三方代理抓取，输出全文 Markdown，须在「摘录+链接永不镜像」宪法下明确：只存摘录、不存全文，落笔后再用。</li><li>两者均未在 PolyScout 真实环境验证，按未验项管理。</li></ul>
+<div class="act"><b>对 PolyScout 的动作：</b>加入 issue #14 与 v0.3 CSDN 的候选池，各补一条合规评估（第三方端点的预算控制 / 全文输出的镜像边界），评估通过前不写代码。</div>
+<div style="margin-top:8px"><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/exa_search.py#L21-26">channels/exa_search.py:21-26 ↗</a>　<a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/web.py#L48-67">channels/web.py:15-31, 48-67 ↗</a></div></div></details><details><summary><span class="tag">工程细节 · 可立即加固</span>I4. 凭据处理的工程细节：权限 600、凭据擦除、小号警告文案<span class="arrow">▶</span></summary>
+<div class="body"><div style="padding:8px 0 2px"><span class="bar" style="width:44px"></span><span class="wlab">相关度 ●●○</span></div><ul><li>Cookie/Token 只存 ~/.agent-reach/config.yaml，文件权限 600；错误信息一律经 scrub_url_credentials 擦除后再抛出（含 MCP 层）；配 test_doctor_credential_boundaries / test_cookie_security 等专项测试。</li><li>从浏览器提取 cookie 按「最小权限」设计：一次只提取一个明确指定的平台；小红书等只接受用户手工导出（Cookie-Editor），程序不主动读浏览器。</li><li>登录态平台的用户警告文案成熟可直接借用：「存在被平台检测并封号的风险，请务必使用专用小号」——与 PolyScout Q5-3（BYO cookie 与 BYOK 同权）配套正合适。</li></ul>
+<div class="act"><b>对 PolyScout 的动作：</b>B站 SESSDATA 处理对齐：配置文件权限 600 + 错误路径凭据擦除 + README 补专用小号警告（小改动，可随下一版本带上）。</div>
+<div style="margin-top:8px"><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/cookie_extract.py#L1-9">cookie_extract.py:1-9, 32-57 ↗</a>　<a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/integrations/mcp_server.py#L61-67">mcp_server.py:61-67（scrub_url_credentials 进错误） ↗</a>　<a class="wlab" href="https://github.com/Panniantong/Agent-Reach#-cookie-安全建议">README「Cookie 安全建议」段 ↗</a></div></div></details><details><summary><span class="tag">分发形态 · v0.3 MCP</span>I5. Agent-native 分发与 MCP 接口克制设计参考<span class="arrow">▶</span></summary>
+<div class="body"><div style="padding:8px 0 2px"><span class="bar" style="width:22px"></span><span class="wlab">相关度 ●○○</span></div><ul><li>「复制一句话给 Agent 即完成安装」：install.md 本身就是给 Agent 读的执行脚本；SKILL.md 常驻规则（先体检再动手、声明当前后端、失败按 runbook、顺手 check-update）是 Agent 集成文档的成熟模板。</li><li>MCP server 只暴露 get_status（doctor 报告）一个工具，不暴露读取——读取留给 Agent 直接调上游。PolyScout v0.3 的 MCP server 定位相反（要暴露带证据链的读取），但其「接口面最小化 + 错误凭据擦除」的写法值得照抄。</li></ul>
+<div class="act"><b>对 PolyScout 的动作：</b>v0.3 MCP server 与 skill 文档设计时参考其接口克制与常驻规则写法。</div>
+<div style="margin-top:8px"><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/skill/SKILL.md#L26-44">skill/SKILL.md:26-44 ↗</a>　<a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/integrations/mcp_server.py#L43-49">mcp_server.py:43-49 ↗</a></div></div></details><details><summary><span class="tag">路线参照 · YouTube 封存</span>I6. YouTube 现状记录：业界通行做法，但不构成合规证据<span class="arrow">▶</span></summary>
+<div class="body"><div style="padding:8px 0 2px"><span class="bar" style="width:22px"></span><span class="wlab">相关度 ●○○</span></div><ul><li>它用 yt-dlp 走 timedtext 提字幕、音频转写接 groq/openai whisper——代表业界通行现状，但它没有回答 timedtext 合规性问题（PolyScout 准入条件 2），93.9k star 不构成合规背书。</li><li>PolyScout YouTube 评估维持 2026-10-05 封存的 5 条准入条件不变；本调研仅作为「业界实践现状」材料归档。</li></ul>
+<div class="act"><b>对 PolyScout 的动作：</b>无路线变更；该材料归入 YouTube 评估档案。</div>
+<div style="margin-top:8px"><a class="wlab" href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/youtube.py#L96-117">channels/youtube.py:42, 96-117 ↗</a></div></div></details>
+
+<h2>不可照搬项与风险</h2>
+<div class="risk"><b>外部 CLI 生态的停更风险不可引入：</b>它的渠道大量依赖第三方单平台 CLI：2026-03 一批集体停更（README 自述「接入方式会换代」），bili-cli 亦已停更。它用「路由层调序」消化这个风险；PolyScout 若直接引入这类依赖则风险进体内。结论：自研 adapter 的重资产路线不变，外部 CLI 只作对照与兜底参照。</div><div class="risk"><b>「Agent 裸调上游」形态与证据链冲突：</b>它读到的内容不进任何证据存储、无 provenance、无预算控制——这正是 PolyScout 的核心差异化。借鉴止于探测/路由层，读取路径必须继续走 Transport + Evidence Store。</div><div class="risk"><b>登录态平台的合规边界：</b>Twitter/小红书/Reddit 等「必须登录态」平台若未来进 PolyScout 路线图，只能走 BYO cookie + 小号警告模式（Q5-3 框架内）；其「专用小号」警告与「不替用户登录、不主动读浏览器 cookie」的边界设定可直接沿用。</div><div class="risk"><b>star 数含营销成分：</b>赞助商位（BrowserAct/腾讯云/CoreClaw/UCloud）与 trendshift 推广存在，93.9k star 不等于代码质量背书；但测试覆盖（34 个测试文件含安全专项）与 CHANGELOG 根因记录本身是实打实的质量信号。</div>
+
+<h2>引用清单（commit 94f06c1）</h2>
+<ol class="refs"><li><a href="https://github.com/Panniantong/Agent-Reach">README.md（定位/B站选型/Cookie 警告） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/base.py">agent_reach/channels/base.py（Channel 基类与后端路由语义） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/bilibili.py">agent_reach/channels/bilibili.py（yt-dlp 412 实测记录） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/probe.py">agent_reach/probe.py（四态探测） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/web.py">agent_reach/channels/web.py（Jina Reader 与反爬页检测） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/exa_search.py">agent_reach/channels/exa_search.py（Exa via mcporter） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/channels/youtube.py">agent_reach/channels/youtube.py（yt-dlp 字幕与转写） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/skill/SKILL.md">agent_reach/skill/SKILL.md（Agent 路由表与常驻规则） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/integrations/mcp_server.py">agent_reach/integrations/mcp_server.py（MCP 接口） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/cookie_extract.py">agent_reach/cookie_extract.py（最小权限 cookie 提取） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/agent_reach/skill/references/video.md">agent_reach/skill/references/video.md（B站命令手册） ↗</a></li><li><a href="https://github.com/Panniantong/Agent-Reach/blob/94f06c1/CHANGELOG.md">CHANGELOG.md（雪球修复等根因记录） ↗</a></li><li><a href="https://github.com/public-clis/bilibili-cli">bili-cli 仓库（停更状态核实） ↗</a></li><li><a href="https://github.com/jackwener/OpenCLI">OpenCLI 仓库（活跃度核实） ↗</a></li></ol>
+
+<div class="note">
+验证声明：① 本报告全部事实性断言均来自 2026-10-08 对 commit 94f06c1 的源码精读（zipball 本地解压）与 GitHub REST API 元数据，引用到文件与行号；② 「yt-dlp 被 B站 412 封死」「bili-cli 停更但可用」等为其代码注释/README 自述与仓库元数据，未经 PolyScout 环境独立复现；③ Agent-Reach 本身未安装、未实跑；④ 报告由生成器脚本 build_agent_reach_survey.py 产出，可复现。
+</div>
+</div></body></html>
